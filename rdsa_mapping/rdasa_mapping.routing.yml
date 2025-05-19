@@ -1,0 +1,28 @@
+import_industry_csv.content:
+  path: '/admin/RDA_administration/import_industry_csv'
+  defaults:
+    _controller: '\Drupal\rdasa_mapping\Controller\ImportIndustryCSV::content'
+    _title: 'Import Industry CSV'
+  requirements:
+    _role: 'content_administrator'
+import_project_csv.content:
+  path: '/admin/RDA_administration/import_project_csv'
+  defaults:
+    _controller: '\Drupal\rdasa_mapping\Controller\ImportProjectCSV::content'
+    _title: 'Import Project CSV'
+  requirements:
+    _role: 'content_administrator'
+import_council_csv.content:
+  path: '/admin/RDA_administration/import_council_csv'
+  defaults:
+    _controller: '\Drupal\rdasa_mapping\Controller\ImportCouncilCSV::content'
+    _title: 'Import Council CSV'
+  requirements:
+    _role: 'content_administrator'
+RDA_administration.content:
+  path: '/admin/RDA_administration'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'RDA administration'
+  requirements:
+    _role: 'content_administrator'
