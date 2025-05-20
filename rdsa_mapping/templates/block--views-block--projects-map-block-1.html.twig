@@ -115,8 +115,8 @@
   const map = new mapboxgl.Map({
     container: 'map',
     // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
-    style: 'mapbox://styles/mapbox/outdoors-v12',
-//    style: 'mapbox://styles/mapbox/streets-v12',
+    style: 'mapbox://styles/wecollaborate/cmat919qt01it01spbxt1chnl',
+//    default: 'mapbox://styles/mapbox/streets-v12',
     center:  [138.599503, -34.921230],
     zoom: 7
   });
@@ -129,7 +129,7 @@
 
   i = 1;
   // Add markers to the map.
-  for (const marker of points.data.features) {
+ /** for (const marker of points.data.features) {
     // Create a DOM element for each marker.
     const el = document.createElement('div');
     marker.properties.id = i;
@@ -151,7 +151,88 @@
       .setPopup(popup)
       .addTo(map);
 
-  }
+  } 
+*/
+map.on('load', () => {
+  map.addSource('projects', {
+    type: 'geojson',
+    data: points.data,
+    cluster: true,
+    clusterMaxZoom: 14, // Max zoom to cluster points
+    clusterRadius: 50   // Radius of each cluster (px)
+  });
+
+  map.addLayer({
+    id: 'clusters',
+    type: 'circle',
+    source: 'projects',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': '#1b998b',
+      'circle-radius': ['step', ['get', 'point_count'], 20, 10, 30, 30, 40]
+    }
+  });
+
+  map.addLayer({
+    id: 'cluster-count',
+    type: 'symbol',
+    source: 'projects',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '{point_count_abbreviated}',
+      'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+      'text-size': 12
+    }
+  });
+
+  map.addLayer({
+    id: 'unclustered-point',
+    type: 'symbol',
+    source: 'projects',
+    filter: ['!', ['has', 'point_count']],
+    layout: {
+      'icon-image': 'marker-15', // or use 'custom-marker' if you upload your own
+      'icon-size': 1.5,
+      'text-field': ['get', 'title'],
+      'text-offset': [0, 1.5],
+      'text-anchor': 'top'
+    }
+  });
+
+  // Optional: Zoom into cluster when clicked
+  map.on('click', 'clusters', (e) => {
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: ['clusters']
+    });
+    const clusterId = features[0].properties.cluster_id;
+    map.getSource('projects').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+
+      map.flyTo({
+        center: features[0].geometry.coordinates,
+        zoom: zoom
+      });
+    });
+  });
+
+  // Optional: Show popup on unclustered point click
+  map.on('click', 'unclustered-point', (e) => {
+    const coordinates = e.features[0].geometry.coordinates.slice();
+    const description = e.features[0].properties.description;
+    new mapboxgl.Popup()
+      .setLngLat(coordinates)
+      .setHTML(description)
+      .addTo(map);
+  });
+
+  // Change cursor style
+  map.on('mouseenter', 'clusters', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+  map.on('mouseleave', 'clusters', () => {
+    map.getCanvas().style.cursor = '';
+  });
+});
 
   var elements = document.getElementsByClassName("views-row");
 
@@ -236,6 +317,7 @@
     }
   }
   **/
+ /*
  map.on('load', () => {
    // Add a GeoJSON source containing place coordinates and information.
    map.addSource('places', {
@@ -259,8 +341,10 @@
    });
 
  });
+ **/
     // When a click event occurs on a feature in the places layer, open a popup at the
   // location of the feature, with description HTML from its properties.
+/*
   map.on('click', 'points', (e) => {
     // Copy coordinates array.
     const coordinates = e.features[0].geometry.coordinates.slice();
@@ -290,5 +374,6 @@
   //  document.getElementById("p2").style.color = "blue";
   // });
 
+**/
 
 </script>

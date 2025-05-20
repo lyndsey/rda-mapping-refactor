@@ -200,7 +200,7 @@ function rdasa_mapping_preprocess_views_view(&$variables) {
         $public = $project->field_public_project->getValue();
         $public = ($public[0]["value"] == 1) ? "Yes" : 'No';
         $row_number= $key + 1;
-        $coordinates[] = [$lat, $lng, $title, $description, $public, $row_number];
+        $coordinates[] = [$lat, $lng, $title, $description, $public, $row_number, $nodeid];
       }
     }
     $variables["mapbox"]["coordinates"] = $coordinates;
@@ -287,8 +287,9 @@ function rdasa_mapping_preprocess_page(&$variables): void
     $type = $variables["node"]->getType();
     if ($type == "project") {
       $tt = "ss";
-
     }
+$variables['mapbox']['style'] = 'mapbox://styles/wecollaborate/cmat919qt01it01spbxt1chnl';
+    
   }
   $viewport = [
     '#tag' => 'meta',
