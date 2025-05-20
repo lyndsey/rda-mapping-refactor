@@ -11,7 +11,7 @@ use Drupal\mapbox_field\Plugin\Field\FieldType\MapboxField;
 use Drupal\mapbox\Mapbox;
 use Drupal\rdasa_mapping\Controller\RDA_mapping;
 
-
+/** Sets the submit function for the project editing form **/
 function rdasa_mapping_form_alter(&$form, FormStateInterface $form_state) {
   $tt = "ss";
 }
@@ -23,7 +23,7 @@ function rdasa_mapping_form_node_project_edit_form_alter(&$form, FormStateInterf
 
 
 /**
- * Submit callback for user profile form to save the Google Analytics setting.
+* Submit callback for the Project submission form.
  */
 function _rdasa_mapping_form_node_project_submit($form, FormStateInterface $form_state) {
   /** @var Drupal\user\ProfileForm $profileForm */
@@ -34,6 +34,7 @@ function _rdasa_mapping_form_node_project_submit($form, FormStateInterface $form
 
   // @TODO Only if changed
   // @TODO also need to check if it exists
+  // Convert the given address to a geo location - lat / long on save. 
   $field_address = $project->field_address[0];
 
   $address=$field_address->getValue();
@@ -61,6 +62,8 @@ function _rdasa_mapping_form_node_project_submit($form, FormStateInterface $form
   **/
   $project->save();
 }
+
+/** Sets up the map pages to have information needed for the Projects showing on the maps **/ 
 
 function rdasa_mapping_preprocess_container(&$variables) {
   $route_name = \Drupal::routeMatch()->getRouteName();
