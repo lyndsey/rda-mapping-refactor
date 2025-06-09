@@ -23,3 +23,11 @@ single_node_map:
     - core/drupal
     - core/jquery
     - rdasa_mapping/mapbox
+mapbox_rda:
+  version: 1.x
+  js:
+    js/mapbox.rda.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - rdasa_mapping/mapbox
