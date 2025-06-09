@@ -5,16 +5,17 @@
   <button data-style="satellite-streets-v12">Satellite View</button>
 </div>
 <div id="map" class="mapbox-map"></div>
-
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     mapboxgl.accessToken = '{{ mapbox.accessToken }}';
 
     const map = new mapboxgl.Map({
       container: 'single-node-map',
-      style: 'mapbox://styles/mapbox/streets-v12',
+    // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+    style: 'mapbox://styles/wecollaborate/cmat919qt01it01spbxt1chnl',
+    //    default: 'mapbox://styles/mapbox/streets-v12',
       center: [{{ mapbox.position.lng }}, {{ mapbox.position.lat }}],
-      zoom: 13
+      zoom: 7
     });
 
     map.on('load', () => {
