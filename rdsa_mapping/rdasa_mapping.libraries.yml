@@ -12,6 +12,14 @@ mapbox:
     theme:
       css/rdasa_mapping.css: {}
       https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css:
-
         type: external
-      https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js: {type: external}
+      https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css:
+        type: external
+single_node_map:
+  version: 1.x
+  js:
+    js/single-node-map.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - rdasa_mapping/mapbox
