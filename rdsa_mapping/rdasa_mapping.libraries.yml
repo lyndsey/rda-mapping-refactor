@@ -15,6 +15,7 @@ mapbox:
         type: external
       https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css:
         type: external
+
 single_node_map:
   version: 1.x
   js:
@@ -23,6 +24,7 @@ single_node_map:
     - core/drupal
     - core/jquery
     - rdasa_mapping/mapbox
+
 mapbox_rda:
   version: 1.x
   js:
