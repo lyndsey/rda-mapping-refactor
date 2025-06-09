@@ -1,63 +1,34 @@
-<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js"></script>
-<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
-<div class="mapbox-map" id="{{ mapbox.position.instance_delta }}">
+{{ attach_library('rdasa_mapping/single-node-map') }}
+
+<div class="map-style-toggle">
+  <button data-style="streets-v12">Street View</button>
+  <button data-style="satellite-streets-v12">Satellite View</button>
 </div>
+<div id="map" class="mapbox-map"></div>
+
 <script>
-  mapboxgl.accessToken = '{{mapbox.accessToken}}';
-  const map = new mapboxgl.Map({
-    container: '{{ mapbox.position.instance_delta }}', // container ID
-// Choose from Mapbox's core styles, or make your own style with Mapbox Studio
-    style: '{{ mapbox.style }}', // style URL
-    center: [{{mapbox.position.lng}},{{mapbox.position.lat}}], // starting position [lng, lat]
-    zoom: {{ mapbox.options.zoom }} // starting zoom
-  });
+  document.addEventListener('DOMContentLoaded', function () {
+    mapboxgl.accessToken = '{{ mapbox.accessToken }}';
 
-  const draw = new MapboxDraw({
-    displayControlsDefault: false,
-  });
-  map.addControl(draw);
-  map.on('load', () => {
-    map.addSource('places', {{ mapbox.geo_json|json_encode(constant('JSON_PRETTY_PRINT'))|raw }});
-    map.addLayer({
-      'id': 'places',
-      'type': 'symbol',
-      'source': 'places',
-      'layout': {
-        'icon-image': ['get', 'icon'],
-        'icon-allow-overlap': true
-      }
+    const map = new mapboxgl.Map({
+      container: 'single-node-map',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [{{ mapbox.position.lng }}, {{ mapbox.position.lat }}],
+      zoom: 13
     });
-// When a click event occurs on a feature in the places layer, open a popup at the
-// location of the feature, with description HTML from its properties.
-    map.on('click', 'places', (e) => {
-// Copy coordinates array.
-      const coordinates = e.features[0].geometry.coordinates.slice();
-      const description = e.features[0].properties.description;
 
-// Ensure that if the map is zoomed out such that multiple
-// copies of the feature are visible, the popup appears
-// over the copy being pointed to.
-      while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-      }
+    map.on('load', () => {
+      const el = document.createElement('div');
+      el.className = '{{ mapbox.public == "Yes" ? "marker" : "marker-red" }}';
 
-      new mapboxgl.Popup()
-        .setLngLat(coordinates)
-        .setHTML(description)
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        <p>{{ mapbox.description|raw }}</p>
+      `);
+
+      new mapboxgl.Marker(el)
+        .setLngLat([{{ mapbox.position.lng }}, {{ mapbox.position.lat }}])
+        .setPopup(popup)
         .addTo(map);
-    });
-
-// Change the cursor to a pointer when the mouse is over the places layer.
-    map.on('mouseenter', 'places', () => {
-      map.getCanvas().style.cursor = 'pointer';
-    });
-
-// Change it back to a pointer when it leaves.
-    map.on('mouseleave', 'places', () => {
-      map.getCanvas().style.cursor = '';
     });
   });
 </script>
