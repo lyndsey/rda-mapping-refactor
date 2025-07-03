@@ -1,0 +1,127 @@
+.calculation-box {
+  height: 75px;
+  width: 150px;
+  position: absolute;
+  bottom: 40px;
+  left: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  text-align: center;
+}
+
+p {
+  font-family: 'Open Sans', sans-serif;
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Base styles for the entire address block */
+p.address {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+  margin: 0 0 0em;
+  line-height: 1.5;
+}
+
+/* Make every inner <span> its own line with a little breathing room */
+p.address span {
+  margin: 0.0em 0;
+}
+
+.mapboxgl-popup {
+  max-width: 400px;
+}
+
+.mapboxgl-popup-content {
+  font-size: 14px;
+}
+
+.marker-bubble,
+.marker-bubble-red {
+  position: relative;
+  background: #1b998b;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+  display: inline-block;
+  line-height: 1;
+}
+
+.marker-bubble-red {
+  background: #d90368;
+}
+
+.marker-bubble::after,
+.marker-bubble-red::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0;
+  border-style: solid;
+  border-color: currentColor transparent transparent transparent;
+}
+
+.marker-bubble img,
+.marker-bubble-red img {
+  height: 20px;
+  width: 20px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Node‐page map container */
+.mapbox-map {
+  width: 100%;
+  height: 500px;
+  position: relative;
+}
+
+/* Match your popup styling from the projects view */
+.mapboxgl-popup {
+  max-width: 400px;
+  font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+/* Hide the raw location and counter fields */
+.views-field-field-project-location,
+.views-field-counter {
+  display: none;
+}
+
+/* Node-page map styling (mirror Projects view) */
+body { margin: 0; padding: 0; }
+.view-map-wrapper #map {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  margin-bottom: 2rem;
+  z-index: 1;
+}
+.marker {
+  background-image: url('https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png');
+  background-size: cover;
+  width: 32px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.marker-red {
+  background-image: url('/modules/custom/rdasa_mapping/images/edit-xxl.png');
+  background-size: cover;
+  width: 32px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.mapboxgl-popup {
+  max-width: 400px;
+  font: 10px/16px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+.views-field-field-project-location,
+.views-field-counter {
+  display: none;
+}

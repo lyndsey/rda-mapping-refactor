@@ -1,0 +1,552 @@
+{#
+/**
+ * @file
+ * Theme override for a main view template.
+ *
+ * Available variables:
+ * - attributes: Remaining HTML attributes for the element.
+ * - css_name: A CSS-safe version of the view name.
+ * - css_class: The user-specified classes names, if any.
+ * - header: The optional header.
+ * - footer: The optional footer.
+ * - rows: The results of the view query, if any.
+ * - empty: The content to display if there are no rows.
+ * - pager: The optional pager next/prev links to display.
+ * - exposed: Exposed widget form/info to display.
+ * - feed_icons: Optional feed icons to display.
+ * - more: An optional link to the next page of results.
+ * - title: Title of the view, only used when displaying in the admin preview.
+ * - title_prefix: Additional output populated by modules, intended to be
+ *   displayed in front of the view title.
+ * - title_suffix: Additional output populated by modules, intended to be
+ *   displayed after the view title.
+ * - attachment_before: An optional attachment view to be displayed before the
+ *   view content.
+ * - attachment_after: An optional attachment view to be displayed after the
+ *   view content.
+ * - dom_id: Unique id for every view being printed to give unique class for
+ *   JavaScript.
+ *
+ * @see template_preprocess_views_view()
+ */
+#}
+{%
+  set classes = [
+    'view',
+    'view-' ~ id|clean_class,
+    'view-id-' ~ id,
+    'view-display-id-' ~ display_id,
+    dom_id ? 'js-view-dom-id-' ~ dom_id,
+  ]
+%}
+<div{{ attributes.addClass(classes) }}>
+  {{ title_prefix }}
+  {% if title %}
+    {{ title }}
+  {% endif %}
+  {{ title_suffix }}
+  {% if header %}
+    <div class="view-header">
+      {{ header }}
+    </div>
+  {% endif %}
+  {% if exposed %}
+    <div class="view-filters">
+      {{ exposed }}
+    </div>
+ <div id="map" style="height: 600px; width: 100vw; margin-left: calc(-50vw + 50%);"></div>
+<div id="style-switcher" style="position: absolute; top: 10px; right: 10px; z-index: 1; background: white; padding: 5px; border-radius: 4px;">
+  <button data-style="mapbox://styles/mapbox/streets-v12">Street View</button>
+  <button data-style="mapbox://styles/mapbox/satellite-v9">Satellite View</button>
+</div>
+
+  {% endif %}
+  {% if attachment_before %}
+    <div class="attachment attachment-before">
+      {{ attachment_before }}
+    </div>
+  {% endif %}
+
+  {% if rows %}
+    <div class="view-content">
+      {{ rows }}
+    </div>
+  {% elseif empty %}
+    <div class="view-empty">
+      {{ empty }}
+    </div>
+  {% endif %}
+
+  {% if pager %}
+    {{ pager }}
+  {% endif %}
+  {% if attachment_after %}
+    <div class="attachment attachment-after">
+      {{ attachment_after }}
+    </div>
+  {% endif %}
+  {% if more %}
+    {{ more }}
+  {% endif %}
+  {% if footer %}
+    <div class="view-footer">
+      {{ footer }}
+    </div>
+  {% endif %}
+  {% if feed_icons %}
+    <div class="feed-icons">
+      {{ feed_icons }}
+    </div>
+  {% endif %}
+</div>
+<style>
+  body { margin: 0; padding: 0; }
+  #map {  width: 100%; height:500px; }
+  .marker {
+    background-image: url('https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png');
+    background-size: cover;
+    width: 32px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .marker-red {
+    background-image: url('/modules/custom/rdasa_mapping/images/edit-xxl.png');
+    background-size: cover;
+    width: 32px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .mapboxgl-popup {
+    max-width: 400px;
+    font: 10px/16px 'Helvetica Neue',
+    Arial,
+    Helvetica,
+    sans-serif;
+  }
+  .views-field-field-project-location {
+    display:none;
+  }
+
+  .views-field-counter {
+    display: none;
+  }
+
+  .form-item-field-project-stage-target-id > select {
+    height:80px;
+  }
+
+  .form-item-field-local-government-area-target-id > select {
+    width: 200px;
+    height:80px;
+  }
+
+  .form-item-field-industry-sector-target-id > select {
+    width: 200px;
+    height:80px;
+  }
+
+  .form-item-field-timeframe-for-commencement-target-id > select {
+    width: 150px;
+    height:80px;
+  }
+</style>
+<script>
+  mapboxgl.accessToken = '{{ mapbox.id }}';
+  
+
+  var map = new mapboxgl.Map({
+    container: 'map',
+    // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+   //  style: 'mapbox://styles/wecollaborate/cmat919qt01it01spbxt1chnl',
+       style: 'mapbox://styles/mapbox/streets-v12',
+    center:  [138.599503, -34.921230],
+    zoom: 7
+  });
+
+  /**
+   * Assign a unique id to each store. You'll use this `id`
+   * later to associate each point on the map with a listing
+   * in the sidebar.
+   */
+
+  i = 1;
+  
+  /* Replacing with clustering markers
+  // Add markers to the map.
+  for (const marker of points.data.features) {
+    // Create a DOM element for each marker.
+    const el = document.createElement('div');
+    marker.properties.id = i;
+    i++;
+    el.id = `marker-${marker.properties.id}`;
+    if (marker.properties.public === 'Yes') {
+      el.className = 'marker';
+    } else {
+      el.className = 'marker-red';
+    }
+    const popup = new mapboxgl.Popup({ offset: 25 }) // add popups
+      .setHTML(
+        `<p>${marker.properties.description}</p>`
+      )
+
+    // Add markers to the map.
+    new mapboxgl.Marker(el)
+      .setLngLat(marker.geometry.coordinates)
+      .setPopup(popup)
+      .addTo(map);
+
+  }
+**/
+
+  // Load custom marker icons
+  map.loadImage('/modules/custom/rdasa_mapping/images/lock-open-128.png', (err, img) => {
+    if (err) throw err;
+    if (!map.hasImage('lock-open')) map.addImage('lock-open', img);
+  });
+  map.loadImage('/modules/custom/rdasa_mapping/images/lock-solid-128.png', (err, img) => {
+    if (err) throw err;
+    if (!map.hasImage('lock-solid')) map.addImage('lock-solid', img);
+  });
+
+  var points = {
+    'type': 'geojson',
+    'data': {
+      'type': 'FeatureCollection',
+      'features': [
+        {% for coordinate in mapbox.coordinates %}
+        {
+          'type': 'Feature',
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [{{ coordinate.1 }}, {{ coordinate.0 }}]
+          },
+    'properties': {
+      'icon': '{{ coordinate.4 == "Yes" ? "lock-open" : "lock-solid" }}',
+      'title': '{{ coordinate.2|escape('js') }}',
+      'description': '{{ coordinate.3|escape('js') }}',
+      'public': '{{ coordinate.4 }}',
+      'nid': '{{ coordinate.5 }}'
+}
+        },
+        {% endfor %}
+      ]
+    }
+  };
+
+// Adding map marker clustering
+
+map.on('load', () => {
+  document.getElementById('style-switcher').addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') {
+      const newStyle = e.target.getAttribute('data-style');
+      const currentData = map.getSource('projects')._data;
+
+      map.setStyle(newStyle);
+
+      map.once('styledata', () => {
+        map.loadImage('/modules/custom/rdasa_mapping/images/lock-open-128.png', (err, img) => {
+          if (!err && !map.hasImage('lock-open')) map.addImage('lock-open', img);
+        });
+        map.loadImage('/modules/custom/rdasa_mapping/images/lock-solid-128.png', (err, img) => {
+          if (!err && !map.hasImage('lock-solid')) map.addImage('lock-solid', img);
+        });
+
+        map.addSource('projects', {
+          type: 'geojson',
+          data: currentData,
+          cluster: true,
+          clusterMaxZoom: 14,
+          clusterRadius: 50
+        });
+
+        map.addLayer({
+          id: 'clusters',
+          type: 'circle',
+          source: 'projects',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-color': '#1b998b',
+            'circle-radius': ['step', ['get', 'point_count'], 15, 10, 25, 30, 35]
+          }
+        });
+
+        map.addLayer({
+          id: 'cluster-count',
+          type: 'symbol',
+          source: 'projects',
+          filter: ['has', 'point_count'],
+          layout: {
+            'text-field': '{point_count_abbreviated}',
+            'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+            'text-size': 12
+          }
+        });
+
+        map.addLayer({
+          id: 'unclustered-point',
+          type: 'symbol',
+          source: 'projects',
+          filter: ['!', ['has', 'point_count']],
+          layout: {
+            'icon-image': ['get', 'icon'],
+            'icon-size': 0.3,
+            'text-field': ['get', 'title'],
+            'text-anchor': 'top',
+            'text-offset': [0, 1.5],
+            'icon-allow-overlap': true,
+            'text-allow-overlap': true
+          },
+          paint: {
+            'text-color': '#1b1b1b',
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 1.5,
+            'text-halo-blur': 0.5
+          }
+        });
+      });
+    }
+  });
+    console.log('Map render triggered');
+  map.addSource('projects', {
+    type: 'geojson',
+    data: points.data,
+    cluster: true,
+    clusterMaxZoom: 14,
+    clusterRadius: 50
+  });
+
+  map.addLayer({
+    id: 'clusters',
+    type: 'circle',
+    source: 'projects',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': '#1b998b',
+      'circle-radius': ['step', ['get', 'point_count'], 15, 10, 25, 30, 35]
+    }
+  });
+
+  map.addLayer({
+    id: 'cluster-count',
+    type: 'symbol',
+    source: 'projects',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '{point_count_abbreviated}',
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-size': 12
+    }
+  });
+
+map.addLayer({
+  id: 'unclustered-point',
+  type: 'symbol',
+  source: 'projects',
+  filter: ['!', ['has', 'point_count']],
+  layout: {
+    'icon-image': ['get', 'icon'],
+    'icon-size': 0.25,
+    'text-field': ['get', 'title'],
+    'text-anchor': 'top',
+    'text-offset': [0, 1.5],
+    'icon-allow-overlap': true,
+    'text-allow-overlap': true
+  },
+      paint: {
+    'icon-color': [
+      'match',
+      ['get', 'public'],
+      'Yes', '#1b998b',   // green for public
+      'No',  '#d90368',   // pink for private
+  '#999999'  // fallback color
+  ],
+  'text-color': '#1b1b1b',
+  'text-halo-color': '#ffffff',
+  'text-halo-width': 1.5,
+  'text-halo-blur': 0.5
+}
+  });
+
+  map.on('click', 'clusters', (e) => {
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: ['clusters']
+    });
+    const clusterId = features[0].properties.cluster_id;
+    map.getSource('projects').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.flyTo({
+        center: features[0].geometry.coordinates,
+        zoom: zoom
+      });
+    });
+  });
+
+  map.on('click', 'unclustered-point', (e) => {
+    const coordinates = e.features[0].geometry.coordinates.slice();
+    const description = e.features[0].properties.description;
+    new mapboxgl.Popup()
+      .setLngLat(coordinates)
+      .setHTML(description)
+      .addTo(map);
+  });
+});
+
+/* adding pop up click handler
+map.on('click', 'unclustered-point', (e) => {
+  const coordinates = e.features[0].geometry.coordinates.slice();
+  const nodeId = e.features[0].properties.nid;
+
+  const link = document.createElement('a');
+  link.href = `/node/${nodeId}`;
+  link.className = 'use-ajax';
+  link.dataset.dialogType = 'modal';
+  link.textContent = 'View project details';
+
+  const wrapper = document.createElement('div');
+  wrapper.appendChild(link);
+
+  new mapboxgl.Popup()
+    .setLngLat(coordinates)
+    .setDOMContent(wrapper)
+    .addTo(map);
+
+  Drupal.attachBehaviors(wrapper);
+});
+
+  map.on('mouseenter', 'clusters', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', 'clusters', () => {
+    map.getCanvas().style.cursor = '';
+  });
+});
+
+end cluster code **/ 
+
+  var elements = document.getElementsByClassName("views-row");
+
+  for (var i = 0; i < elements.length; i++) {
+    elements[i].addEventListener('click', function (e) {
+      var location_field = this.getElementsByClassName("views-field-field-project-location");
+      var lf = location_field[0].firstChild.textContent;
+      const latlong = lf.trim().split(",");
+      var coordinates = [latlong[1], latlong[0]];
+      var place_number_field = this.getElementsByClassName("views-field-counter");
+      var pn = place_number_field[0].firstChild.textContent;
+      pn = pn - 1;
+      const feature = points.data.features[pn];
+
+      // Fly to a random locations
+      map.flyTo({
+        center: coordinates,
+        zoom: 16,
+        essential: true // this animation is considered essential with respect to prefers-reduced-motion
+      });
+      // console.log(feature);
+      // console.log(pn);
+      // console.log(points.data.features);
+
+      const popUps = document.getElementsByClassName('mapboxgl-popup');
+      if (popUps[0]) popUps[0].remove();
+      new mapboxgl.Popup({ offset: 25 })
+        .setLngLat(coordinates)
+        .setHTML(
+          `<p>${feature.properties.description}</p>`
+        )
+        .addTo(map)
+    });
+  }
+
+  /** var myFunction = function(e) {
+   var location_field = this.getElementsByClassName("views-field-field-project-location");
+   var content = location_field[0].firstChild.textContent;
+   const latlong = content.trim().split(",");
+   var coordinates = [latlong[1], latlong[0]];
+   // Fly to a random locations
+   map.flyTo({
+   center: coordinates,
+   zoom: 16,
+   essential: true // this animation is considered essential with respect to prefers-reduced-motion
+   }).popup(popup)
+   //** setPopup(
+   //  new mapboxgl.Popup({ offset: 25 }) // add popups
+   //  .setHTML(
+   //  `<p>${e.properties.description}</p>`
+   // )
+   //)
+   // .addTo(map);
+   //}
+
+   for (var i = 0; i < elements.length; i++) {
+   elements[i].addEventListener('click', function(e) {
+   console.log(e);
+   var location_field = this.getElementsByClassName("views-field-field-project-location");
+   var content = location_field[0].firstChild.textContent;
+   const latlong = content.trim().split(",");
+   var coordinates = [latlong[1], latlong[0]];
+
+   // Fly to a random locations
+   map.flyTo({
+   center: coordinates,
+   zoom: 16,
+   essential: true // this animation is considered essential with respect to prefers-reduced-motion
+   }).popup.addTo(map)
+   });
+
+   for (const feature of points.data.features) {
+   if (this.id === `link-${feature.properties.id}`) {
+   const popup = new mapboxgl.Popup({ offset: 25 })
+   .setLngLat(feature.geometry.coordinates)
+   new mapboxgl.Popup() // add popups
+   .setHTML(
+   `<p>${feature.properties.description}</p>`
+   )
+   .addTo(map);
+   }
+   }
+   }
+   **/
+ /* Removing as we've added clusters
+  map.on('load', () => {
+    // Add a GeoJSON source containing place coordinates and information.
+    map.addSource('places', {
+      'type': 'geojson',
+      'data': points.data
+    });
+
+    map.addLayer({
+      'id': 'poi-labels',
+      'type': 'symbol',
+      'source': 'places',
+      'layout': {
+        'text-field': ['get', 'title'],
+        'text-anchor': 'left',
+        'text-offset': [1.25, 1.25],
+        'text-allow-overlap': false,
+        'text-optional': true,
+        'text-justify': 'auto',
+        'icon-image': ['get', 'icon']
+      }
+    });
+
+  }); 
+  **/
+  // When a click event occurs on a feature in the places layer, open a popup at the
+  // location of the feature, with description HTML from its properties.
+
+  // Change the cursor to a pointer when the mouse is over the places layer.
+
+  // Change it back to a pointer when it leaves.
+  // When the button is clicked, zoom in to zoom level 19.
+  // The animation duration is 9000 milliseconds.
+  //document.getElementById('zoom').addEventListener('click', () => {
+  //  map.zoomTo(18, { duration: 9000 });
+  //  document.getElementById("p2").style.color = "blue";
+  // });
+
+
+</script>

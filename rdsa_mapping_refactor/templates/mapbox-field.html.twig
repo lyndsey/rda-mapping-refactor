@@ -1,0 +1,59 @@
+{{ attach_library('rdasa_mapping/mapbox') }}
+
+<div class="map-style-toggle">
+  <button data-style="streets-v12">Street View</button>
+  <button data-style="satellite-streets-v12">Satellite View</button>
+</div>
+
+<div id="mapbox-field-map"></div>
+
+<style>
+  #mapbox-field-map {
+    height: 500px;
+    width: 100%;
+  }
+  .marker {
+    background-image: url('https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png');
+    background-size: cover;
+    width: 32px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .marker-red {
+    background-image: url('/modules/custom/rdasa_mapping/images/edit-xxl.png');
+    background-size: cover;
+    width: 32px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  mapboxgl.accessToken = '{{ mapbox.id }}';
+  const map = new mapboxgl.Map({
+    container: 'mapbox-field-map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [{{ mapbox.position.lng }}, {{ mapbox.position.lat }}],
+    zoom: 15
+  });
+
+  const el = document.createElement('div');
+  el.className = '{{ mapbox.public == "Yes" ? "marker" : "marker-red" }}';
+
+  const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`<p>{{ mapbox.description|e }}</p>`);
+
+  new mapboxgl.Marker(el)
+    .setLngLat([{{ mapbox.position.lng }}, {{ mapbox.position.lat }}])
+    .setPopup(popup)
+    .addTo(map);
+    
+ // Toggle style
+  document.querySelectorAll('.map-style-toggle button').forEach(button => {
+    button.addEventListener('click', function () {
+      const styleId = this.getAttribute('data-style');
+      map.setStyle(`mapbox://styles/mapbox/${styleId}`);
+    });
+  });    
+</script>

@@ -1,0 +1,230 @@
+<?php
+
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldItemList;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\TypedData\DataDefinitionInterface;
+use Drupal\geocoder\Plugin\Geocoder\Formatter;
+use Drupal\taxonomy\Entity\Term;
+use Geocoder\Location;
+use Drupal\mapbox_field\Plugin\Field\FieldType\MapboxField;
+use Drupal\mapbox\Mapbox;
+use Drupal\rdasa_mapping\Controller\RDA_mapping;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_form_alter().
+ */
+function rdasa_mapping_form_alter(array &$form, FormStateInterface $form_state) {
+  // Custom form alterations can go here.
+}
+
+/**
+ * Alter the Project edit form: disable address string and attach custom submit.
+ */
+function rdasa_mapping_form_node_project_edit_form_alter(array &$form, FormStateInterface $form_state) {
+  $form['field_address_string']['widget'][0]['#disabled'] = TRUE;
+  $form['actions']['submit']['#submit'][] = '_rdasa_mapping_form_node_project_submit';
+}
+
+/**
+ * Submit callback for the Project submission form.
+ */
+function _rdasa_mapping_form_node_project_submit(array $form, FormStateInterface $form_state) {
+  $projectForm = $form_state->getFormObject();
+  $project = $projectForm->getEntity();
+
+  // Geocode address on save.
+  $address = $project->field_address[0]->getValue();
+  $rda_mapper = new RDA_mapping();
+  $coordinates = $rda_mapper->addressStringToLocation($address);
+  if (!empty($coordinates)) {
+    $latitude = number_format($coordinates->getLatitude(), 10);
+    $longitude = number_format($coordinates->getLongitude(), 10);
+    $project_location = $project->get('field_project_location');
+    if (!$project_location->isEmpty()) {
+      $pl = $project_location->getValue();
+      $pl[0]['lng'] = $longitude;
+      $pl[0]['lat'] = $latitude;
+      $project->set('field_project_location', $pl);
+    }
+    else {
+      $project->set('field_project_location', [(float) $latitude, (float) $longitude]);
+    }
+  }
+  $project->save();
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ * Make zoom visible and override defaults for new Mapbox fields.
+ */
+function rdasa_mapping_field_widget_form_alter(&$element, FormStateInterface $form_state, $context) {
+  // Target only the Mapbox widget plugin.
+  if (
+    isset($context['widget']) &&
+    $context['widget'] instanceof \Drupal\Core\Field\WidgetInterface &&
+    $context['widget']->getPluginId() === 'mapbox_widget'
+  ) {
+    // Zoom: make it a visible select.
+    if (isset($element['zoom'])) {
+      $element['zoom']['#type'] = 'select';
+      $element['zoom']['#options'] = array_combine(range(3, 20), range(3, 20));
+      $element['zoom']['#title'] = t('Zoom level');
+      if ($element['zoom']['#default_value'] === 9) {
+        $element['zoom']['#default_value'] = 14;
+      }
+    }
+    // Pitch override for new widgets.
+    if (isset($element['pitch']['#default_value']) && $element['pitch']['#default_value'] === 45) {
+      $element['pitch']['#default_value'] = 50;
+    }
+    // Max pitch override for new widgets.
+    if (isset($element['maxPitch']['#default_value']) && $element['maxPitch']['#default_value'] === 65) {
+      $element['maxPitch']['#default_value'] = 75;
+    }
+  }
+}
+
+/**
+ * Preprocess first container-level hook for map views.
+ */
+function rdasa_mapping_preprocess_container(&$variables) {
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name === 'entity.group.canonical') {
+    $mapbox_key = \Drupal::service('mapbox')->accessToken();
+    $variables['mapbox']['id'] = $mapbox_key;
+    $view = $variables['content']['#view'];
+    $coordinates = [];
+    foreach ($view->result as $result) {
+      $entity = $result->_entity;
+      $loc = $entity->field_project_location->first();
+      if ($loc) {
+        $coordinates[] = [
+          (float) $loc->lat,
+          (float) $loc->lng,
+          $entity->label(),
+          $entity->toLink()->toString(),
+          $entity->field_public_project->value ? 'Yes' : 'No',
+        ];
+      }
+    }
+    $variables['mapbox']['coordinates'] = $coordinates;
+  }
+}
+
+/**
+ * Preprocess hook for views (projects map page display).
+ */
+function rdasa_mapping_preprocess_views_view(&$variables) {
+  $view = $variables['view'];
+  if ($view->id() === 'projects_map' && $view->current_display === 'page_2') {
+    $mapbox_key = \Drupal::service('mapbox')->accessToken();
+    $variables['mapbox']['id'] = $mapbox_key;
+    $coordinates = [];
+    foreach ($view->result as $key => $result) {
+      $entity = $result->_entity;
+      $loc = $entity->field_project_location->first();
+      if ($loc) {
+        $coordinates[] = [
+          (float) $loc->lat,
+          (float) $loc->lng,
+          $entity->label(),
+          $entity->toLink()->toString(),
+          $entity->field_public_project->value ? 'Yes' : 'No',
+          $key + 1,
+          $entity->id(),
+        ];
+      }
+    }
+    $variables['mapbox']['coordinates'] = $coordinates;
+  }
+}
+
+/**
+ * Preprocess hook for block (projects map block display).
+ */
+function rdasa_mapping_preprocess_block(&$variables) {
+  $id = $variables['elements']['#id'] ?? '';
+  if ($id === 'views_block__projects_map_block_1') {
+    $mapbox_key = \Drupal::service('mapbox')->accessToken();
+    $variables['mapbox']['id'] = $mapbox_key;
+    $view = $variables['content']['#view'];
+    $coordinates = [];
+    foreach ($view->result as $result) {
+      $entity = $result->_entity;
+      $loc = $entity->field_project_location->first();
+      if ($loc) {
+        $coordinates[] = [
+          (float) $loc->lat,
+          (float) $loc->lng,
+          $entity->label(),
+          $entity->toLink()->toString(),
+          $entity->field_public_project->value ? 'Yes' : 'No',
+        ];
+      }
+    }
+    $variables['mapbox']['coordinates'] = $coordinates;
+  }
+}
+
+/**
+ * Preprocess hook for page: attach Mapbox library and viewport meta.
+ */
+function rdasa_mapping_preprocess_page(&$variables) {
+  if (isset($variables['node']) && $variables['node']->getType() === 'project') {
+    $variables['mapbox']['style'] = 'mapbox://styles/wecollaborate/cmat919qt01it01spbxt1chnl';
+  }
+  $variables['#attached']['library'][] = 'rdasa_mapping/mapbox';
+  $viewport = [
+    '#tag' => 'meta',
+    '#attributes' => [
+      'name' => 'viewport',
+      'content' => 'initial-scale=1,maximum-scale=1,user-scalable=no',
+    ],
+  ];
+  $variables['#attached']['html_head'][] = [$viewport, 'viewport'];
+}
+
+/**
+ * Implements hook_theme().
+ */
+function rdasa_mapping_theme() {
+  return [
+    'block__views_block__projects_map_block_1' => [
+      'variables' => ['mapbox' => []],
+      'template' => 'block--views-block--projects-map-block-1',
+      'base hook' => 'block__views',
+    ],
+    'views_view__projects_map' => [
+      'template' => 'views-view-projects-map',
+      'base hook' => 'views__view',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_theme_suggestions_alter().
+ */
+function rdasa_mapping_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
+  if ($hook === 'views_view' && $variables['view']->id() === 'projects_map') {
+    $suggestions[] = 'views_view__projects_map';
+  }
+}
+/**
+ * Implements hook_page_attachments_alter().
+ *
+ * After all modules have attached assets, override every mapbox_renderer entry
+ * so every map comes up at zoom 14 and pitch 0.
+ */
+function rdasa_mapping_page_attachments_alter(array &$attachments) {
+  if (!empty($attachments['drupalSettings']['mapbox_renderer'])) {
+    foreach ($attachments['drupalSettings']['mapbox_renderer'] as &$settings) {
+      // Force default view: zoom=14, no tilt.
+      $settings['options']['zoom']     = 14;
+      $settings['options']['pitch']    = 0;
+      $settings['options']['maxPitch'] = 0;
+    }
+  }
+}
