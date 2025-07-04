@@ -14,7 +14,7 @@ if (container) {
     antialias: true           // Smoother rendering
   });
 
-// ✅ Add this line to show zoom and compass controls:
+// Add this line to show zoom and compass controls:
 map.addControl(new mapboxgl.NavigationControl());
 
   console.log("here");

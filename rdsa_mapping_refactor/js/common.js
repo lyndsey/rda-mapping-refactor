@@ -1,3 +1,17 @@
+(function (Drupal, drupalSettings, $) {
+  Drupal.behaviors.rdaCommonMap = {
+    attach: function (context) {
+      if (!drupalSettings.rdaMapping || !drupalSettings.rdaMapping.instances) {
+        return;
+      }
+      drupalSettings.rdaMapping.instances.forEach(function (settings) {
+        renderMap($, settings);
+      });
+    }
+  };
+
+// ——— Copy your working plugin’s code ———
+
 function renderMap($, settings) {
   var accessToken = settings.accessToken;
   var finalRender = settings.options.finalRender;
@@ -14,7 +28,7 @@ function renderMap($, settings) {
   var lat         = marker.lat ? marker.lat : 40.73119569710681;
   var lng         = marker.lng ? marker.lng : -73.98930566093547;
   var instanceId  = 'mapbox-'+container.split('-')[1];
-  if(accessToken != null) {
+  if (accessToken != null) {
     mapboxgl.accessToken = accessToken;
     var map = new mapboxgl.Map({
       container: container,
@@ -30,7 +44,7 @@ function renderMap($, settings) {
     });
     if (finalRender == undefined) {
       map.addControl(new mapboxgl.NavigationControl());
-      map.on('click', function(e){
+      map.on('click', function(e) {
         var lat = e.lngLat.lat;
         var lng = e.lngLat.lng;
         $('input[data-lat-delta="'+ instanceId +'"]').val(lat);
@@ -38,27 +52,29 @@ function renderMap($, settings) {
         $('input[data-marked-delta="'+ instanceId +'"]').val('1');
         var el = document.getElementById(marker.instance_marker);
         el.style.display = 'inline-block';
-
         new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
       });
     }
     map.on('load', function() {
-      var inputLng = $('input[data-lng-delta="'+container+'"]').val()
-      var inputLat = $('input[data-lat-delta="'+container+'"]').val()
+      var inputLng = $('input[data-lng-delta="'+container+'"]').val();
+      var inputLat = $('input[data-lat-delta="'+container+'"]').val();
       var lng = marker.lng ? marker.lng : inputLng;
       var lat = marker.lat ? marker.lat : inputLat;
       var el = document.getElementById(marker.instance_marker);
       el.style.display = 'inline-block';
-      if (marker.markerText)
+      if (marker.markerText) {
         var popup = new mapboxgl.Popup({ offset: 40 }).setText(marker.markerText);
-
+      }
       el.style.backgroundImage = 'url("'+marker.marker+'")';
-      new mapboxgl.Marker(el).setLngLat([lng, lat]).setPopup(popup).addTo(map);
+      new mapboxgl.Marker(el)
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map);
       $('input[data-3d-delta="'+container+'"]').change(function(){
         if (this.checked) {
           threeDLayer(map);
         } else {
-          map.removeLayer('3d-buildings')
+          map.removeLayer('3d-buildings');
         }
       });
       map.resize();
@@ -77,7 +93,7 @@ function renderMap($, settings) {
     });
     map.on('zoomend', function(){
       $('input[data-zoom-delta="'+container+'"]').val(map.getZoom());
-    })
+    });
     return map;
   }
 }
@@ -101,16 +117,19 @@ function threeDLayer(map) {
     'paint': {
       'fill-extrusion-color': '#aaa',
       'fill-extrusion-height': [
-      "interpolate", ["linear"], ["zoom"],
-      15, 0,
-      15.05, ["get", "height"]
+        "interpolate", ["linear"], ["zoom"],
+        15, 0,
+        15.05, ["get", "height"]
       ],
       'fill-extrusion-base': [
-      "interpolate", ["linear"], ["zoom"],
-      15, 0,
-      15.05, ["get", "min_height"]
+        "interpolate", ["linear"], ["zoom"],
+        15, 0,
+        15.05, ["get", "min_height"]
       ],
       'fill-extrusion-opacity': .6
     }
   }, labelLayerId);
 }
+
+// ——— Close the Drupal behavior wrapper ———
+})(Drupal, drupalSettings, jQuery);

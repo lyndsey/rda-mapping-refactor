@@ -119,14 +119,25 @@ function rdasa_mapping_preprocess_container(&$variables) {
  */
 function rdasa_mapping_preprocess_views_view(&$variables) {
   $view = $variables['view'];
-  if ($view->id() === 'projects_map' && $view->current_display === 'page_2') {
-    $mapbox_key = \Drupal::service('mapbox')->accessToken();
-    $variables['mapbox']['id'] = $mapbox_key;
+
+  if (
+    ($view->id() === 'projects_map' && $view->current_display === 'page_2')
+    || ($view->id() === 'group_map'   && $view->current_display === 'page_1')
+  ) {
+    // 1) Load Mapbox GL config.
+    $config = \Drupal::config('mapbox.config');
+
+    // 2) Inject token & style into drupalSettings for JS.
+    $variables['#attached']['drupalSettings']['rdaMapping'] = [
+      'accessToken' => $config->get('access_token'),
+      'style'       => $config->get('style'),
+    ];
+
+    // 3) Build the coordinates array.
     $coordinates = [];
     foreach ($view->result as $key => $result) {
       $entity = $result->_entity;
-      $loc = $entity->field_project_location->first();
-      if ($loc) {
+      if ($loc = $entity->field_project_location->first()) {
         $coordinates[] = [
           (float) $loc->lat,
           (float) $loc->lng,
@@ -139,33 +150,11 @@ function rdasa_mapping_preprocess_views_view(&$variables) {
       }
     }
     $variables['mapbox']['coordinates'] = $coordinates;
-  }
-}
 
-/**
- * Preprocess hook for block (projects map block display).
- */
-function rdasa_mapping_preprocess_block(&$variables) {
-  $id = $variables['elements']['#id'] ?? '';
-  if ($id === 'views_block__projects_map_block_1') {
-    $mapbox_key = \Drupal::service('mapbox')->accessToken();
-    $variables['mapbox']['id'] = $mapbox_key;
-    $view = $variables['content']['#view'];
-    $coordinates = [];
-    foreach ($view->result as $result) {
-      $entity = $result->_entity;
-      $loc = $entity->field_project_location->first();
-      if ($loc) {
-        $coordinates[] = [
-          (float) $loc->lat,
-          (float) $loc->lng,
-          $entity->label(),
-          $entity->toLink()->toString(),
-          $entity->field_public_project->value ? 'Yes' : 'No',
-        ];
-      }
-    }
-    $variables['mapbox']['coordinates'] = $coordinates;
+    // 4) Attach Mapbox core + common.js + initializer.
+    $variables['#attached']['library'][] = 'rdasa_mapping/mapbox';
+    $variables['#attached']['library'][] = 'rdasa_mapping/mapbox_common';
+    $variables['#attached']['library'][] = 'rdasa_mapping/mapbox_rda';
   }
 }
 
@@ -210,21 +199,5 @@ function rdasa_mapping_theme() {
 function rdasa_mapping_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
   if ($hook === 'views_view' && $variables['view']->id() === 'projects_map') {
     $suggestions[] = 'views_view__projects_map';
-  }
-}
-/**
- * Implements hook_page_attachments_alter().
- *
- * After all modules have attached assets, override every mapbox_renderer entry
- * so every map comes up at zoom 14 and pitch 0.
- */
-function rdasa_mapping_page_attachments_alter(array &$attachments) {
-  if (!empty($attachments['drupalSettings']['mapbox_renderer'])) {
-    foreach ($attachments['drupalSettings']['mapbox_renderer'] as &$settings) {
-      // Force default view: zoom=14, no tilt.
-      $settings['options']['zoom']     = 14;
-      $settings['options']['pitch']    = 0;
-      $settings['options']['maxPitch'] = 0;
-    }
   }
 }
